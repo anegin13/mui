@@ -1243,7 +1243,8 @@ var jqLite = require('./lib/jqLite'),
     animationHelpers = require('./lib/animationHelpers'),
     supportsTouch = 'ontouchstart' in document.documentElement,
     mouseDownEvents = (supportsTouch) ? 'touchstart' : 'mousedown',
-    mouseUpEvents = (supportsTouch) ? 'touchend' : 'mouseup mouseleave';
+    mouseUpEvents = (supportsTouch) ? 'touchend' : 'mouseup mouseleave',
+    rippleElSelector = 'span.mui-btn__ripple-container > span.mui-ripple';
 
 
 /**
@@ -1257,15 +1258,6 @@ function initialize(buttonEl) {
 
   // exit if element is INPUT (doesn't support absolute positioned children)
   if (buttonEl.tagName === 'INPUT') return;
-
-  // add ripple container (to avoid https://github.com/muicss/mui/issues/169)
-  var el = document.createElement('span');
-  el.className = 'mui-btn__ripple-container';
-  el.innerHTML = '<span class="mui-ripple"></span>';
-  buttonEl.appendChild(el);
-
-  // cache reference to ripple element
-  buttonEl._rippleEl = el.children[0];
 
   // attach event handler
   jqLite.on(buttonEl, mouseDownEvents, mouseDownHandler);
@@ -1286,10 +1278,17 @@ function mouseDownHandler(ev) {
   // exit if button is disabled
   if (buttonEl.disabled) return;
 
-  // add mouseup handler on first-click
-  if (!rippleEl._init) {
+  // initialize
+  if (!rippleEl) {
+    // create ripple container (https://github.com/muicss/mui/issues/169)
+    var el = document.createElement('span');
+    el.className = 'mui-btn__ripple-container';
+    el.innerHTML = '<span class="mui-ripple"></span>';
+    buttonEl.appendChild(el);
+    buttonEl._rippleEl = rippleEl = el.children[0];  // cache reference
+    
+    // add mouseup handler
     jqLite.on(buttonEl, mouseUpEvents, mouseUpHandler);
-    rippleEl._init = true;
   }
 
   // get ripple element offset values and (x, y) position of click
